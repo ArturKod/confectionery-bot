@@ -1,5 +1,8 @@
 import asyncio
 import logging
+from bot.database import async_session
+from bot.middlewares.db import DbSessionMiddleware
+from bot.repositories.user import UserRepository
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
@@ -28,12 +31,23 @@ storage = RedisStorage.from_url(
 bot = Bot(token=settings.BOT_TOKEN)
 dp = Dispatcher(storage=storage)
 
+# Регистрируем middleware для базы данных
+dp.update.middleware(DbSessionMiddleware(session_pool=async_session))
+
 @dp.message(Command("start"))
-async def cmd_start(message: Message):
-    await message.answer(
-        f"Привет, {message.from_user.full_name}! 👋\n"
-        "Я бот кондитерской. Скоро здесь можно будет заказать торт!"
-    )
+async def cmd_start(message: Message, session): # session добавляется автоматически из middleware
+    tg_id = message.from_user.id
+    full_name = message.from_user.full_name
+    
+    # Проверяем, есть ли пользователь в базе
+    user = await UserRepository.get_by_tg_id(session, tg_id)
+    
+    if not user:
+        # Если нет — создаем
+        await UserRepository.create(session, tg_id, full_name)
+        await message.answer(f"Привет, {full_name}! 👋\nЯ вас зарегистрировал в системе кондитерской.")
+    else:
+        await message.answer(f"С возвращением, {full_name}! 👋\nРад видеть вас снова.")
 
 async def main():
     print("Бот запускается...")
