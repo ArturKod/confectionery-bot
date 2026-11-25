@@ -3,6 +3,7 @@ import logging
 from bot.database import async_session
 from bot.middlewares.db import DbSessionMiddleware
 from bot.repositories.user import UserRepository
+from bot.repositories.product import ProductRepository
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
@@ -48,6 +49,38 @@ async def cmd_start(message: Message, session): # session добавляется
         await message.answer(f"Привет, {full_name}! 👋\nЯ вас зарегистрировал в системе кондитерской.")
     else:
         await message.answer(f"С возвращением, {full_name}! 👋\nРад видеть вас снова.")
+
+@dp.message(Command("catalog"))
+async def cmd_catalog(message: Message, session):
+    products = await ProductRepository.get_all_active(session)
+    
+    if not products:
+        await message.answer("К сожалению, каталог пока пуст.")
+        return
+
+    await message.answer("Вот что у нас есть в наличии:")
+    
+    for product in products:
+        # Форматируем цену, чтобы убрать лишние нули (2500.00 -> 2500)
+        price_formatted = int(product.price) if product.price % 1 == 0 else product.price
+        
+        text = (
+            f"*{product.name}*\n\n"
+            f"{product.description}\n\n"
+            f"💰 Цена: {price_formatted} руб.\n"
+            f"⚖️ Вес: {product.weight_grams} г."
+        )
+        
+        try:
+            # Отправляем как фото с подписью
+            await message.answer_photo(
+                photo=product.image_url,
+                caption=text,
+                parse_mode="Markdown"
+            )
+        except Exception:
+            # Если картинка не загрузится, отправим просто текстом
+            await message.answer(text, parse_mode="Markdown")
 
 async def main():
     print("Бот запускается...")
