@@ -3,7 +3,7 @@
 Telegram-бот для приёма заказов в кондитерской.
 
 ## Стек
-- Python 3.12+
+- Python 3.15+
 - aiogram 3
 - PostgreSQL (SQLAlchemy 2.0 async + asyncpg)
 - APScheduler (напоминания)
