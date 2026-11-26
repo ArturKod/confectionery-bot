@@ -13,15 +13,15 @@ class Base(DeclarativeBase):
 
 
 class OrderStatus(str, enum.Enum):
-    """Статусы заказа."""
-    NEW = "new"              # Только что создан
-    ACCEPTED = "accepted"    # Принят кондитером
-    COOKING = "cooking"      # Готовится
-    READY = "ready"          # Готов к выдаче/доставке
-    COMPLETED = "completed"  # Завершен
-    CANCELLED = "cancelled"  # Отменен
-
-
+    NEW = "Новый"                 # Только создан
+    AGREED = "Согласован"         # Цена и детали утверждены
+    WAITING_FOR_PAYMENT = "Ждет оплаты" # Реквизиты отправлены
+    COOKING = "Готовится"         # Оплата подтверждена
+    READY = "Готов"               # Можно забирать
+    COMPLETED = "Завершен"        # Выдан
+    CANCELLED = "Отменен"         # Отменен
+    PAID = "Оплачен (проверка)" 
+    
 class User(Base):
     """Пользователь (клиент) бота."""
     __tablename__ = "users"
